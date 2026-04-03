@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PeopleEconomics&reg; Proposal Generator</title>
+<style>
+  :root {
+    --primary: #002528;
+    --secondary: #063A41;
+    --green: #22A00B;
+    --accent: #B0C6C8;
+    --light-bg: #f4f7f7;
+    --white: #ffffff;
+    --border: #d0dede;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Calibri, 'Trebuchet MS', sans-serif;
+    color: var(--primary);
+    background: var(--light-bg);
+    line-height: 1.5;
+  }
+
+  /* ── EDITOR PANEL ── */
+  #editor {
+    max-width: 720px;
+    margin: 40px auto;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,37,40,.12);
+    padding: 40px;
+  }
+
+  #editor h1 {
+    font-size: 26px;
+    color: var(--primary);
+    margin-bottom: 6px;
+  }
+  #editor .subtitle {
+    color: var(--secondary);
+    font-size: 14px;
+    margin-bottom: 32px;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 16px;
+  }
+
+  .field-group { margin-bottom: 20px; }
+  .field-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: var(--secondary);
+  }
+  .field-group input,
+  .field-group select,
+  .field-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--primary);
+    background: var(--white);
+  }
+  .field-group input:focus,
+  .field-group select:focus,
+  .field-group textarea:focus {
+    outline: none;
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 3px rgba(6,58,65,.1);
+  }
+  .field-group textarea { resize: vertical; min-height: 60px; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--secondary);
+    margin: 28px 0 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--green); }
+  .checkbox-row label { font-weight: 600; font-size: 14px; color: var(--secondary); margin: 0; }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .btn:hover { opacity: .85; }
+  .btn-primary { background: var(--green); color: var(--white); }
+  .btn-secondary { background: var(--secondary); color: var(--white); }
+  .btn-outline { background: transparent; color: var(--secondary); border: 2px solid var(--secondary); }
+
+  /* ── PROPOSAL OUTPUT ── */
+  #proposal {
+    display: none;
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--white);
+    padding: 0;
+  }
+
+  /* Print / download styling */
+  @media print {
+    body { background: white; }
+    #editor, #proposal-actions { display: none !important; }
+    #proposal { display: block !important; box-shadow: none; margin: 0; max-width: 100%; }
+    .page-break { page-break-before: always; }
+  }
+
+  /* Proposal inner styles (scoped via #proposal) */
+  #proposal .prop-header {
+    background: var(--primary);
+    color: var(--white);
+    padding: 48px 52px 40px;
+  }
+  #proposal .prop-header .brand {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: .5px;
+  }
+  #proposal .prop-header .brand span { color: var(--green); }
+  #proposal .prop-header .tagline {
+    font-size: 13px;
+    color: var(--accent);
+    margin-top: 2px;
+  }
+  #proposal .prop-header .title-block {
+    margin-top: 32px;
+  }
+  #proposal .prop-header .title-block h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  #proposal .prop-header .meta {
+    font-size: 14px;
+    color: var(--accent);
+    line-height: 1.7;
+  }
+
+  #proposal .prop-body { padding: 40px 52px 52px; }
+
+  #proposal h3 {
+    font-size: 19px;
+    color: var(--primary);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent);
+  }
+
+  #proposal .section { margin-bottom: 36px; }
+
+  /* Tables */
+  #proposal table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  #proposal thead th {
+    background: var(--secondary);
+    color: var(--white);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  #proposal thead th:first-child { border-radius: 6px 0 0 0; }
+  #proposal thead th:last-child { border-radius: 0 6px 0 0; }
+  #proposal tbody td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  #proposal tbody tr:last-child td { border-bottom: none; }
+  #proposal tbody tr:nth-child(even) { background: #f7fafa; }
+
+  #proposal .recommended-badge {
+    display: inline-block;
+    background: var(--green);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  #proposal .highlight-col {
+    background: rgba(34,160,11,.06) !important;
+    font-weight: 600;
+  }
+
+  #proposal .total-row td {
+    font-weight: 700;
+    font-size: 15px;
+    border-top: 2px solid var(--secondary);
+    background: #eef4f4 !important;
+  }
+
+  /* Included table */
+  #proposal .check { color: var(--green); font-weight: 700; font-size: 17px; }
+  #proposal .dash { color: #999; }
+
+  /* Terms */
+  #proposal .terms-list {
+    list-style: none;
+    padding: 0;
+  }
+  #proposal .terms-list li {
+    padding: 7px 0 7px 24px;
+    position: relative;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  #proposal .terms-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 8px;
+    height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+  }
+
+  /* Signature block */
+  #proposal .sig-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    margin-top: 20px;
+  }
+  #proposal .sig-box h4 {
+    font-size: 14px;
+    color: var(--secondary);
+    margin-bottom: 20px;
+  }
+  #proposal .sig-line {
+    border-bottom: 1px solid var(--primary);
+    height: 36px;
+    margin-bottom: 4px;
+  }
+  #proposal .sig-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 18px;
+  }
+
+  #proposal-actions {
+    display: none;
+    max-width: 900px;
+    margin: 0 auto 40px;
+    padding: 16px 52px;
+    background: var(--primary);
+    border-radius: 0 0 12px 12px;
+    text-align: right;
+  }
+  #proposal-actions .btn { margin-left: 8px; }
+
+  /* Support add-on row styling */
+  #proposal .addon-row td {
+    font-style: italic;
+    color: var(--secondary);
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════ EDITOR ════════════════════════════════════════ -->
+<div id="editor">
+  <h1>PeopleEconomics&reg; Proposal Generator</h1>
+  <p class="subtitle">Fill in the client details below, then generate a formatted proposal.</p>
+
+  <div class="section-title">Client Details</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label for="clientCompany">Company Name</label>
+      <input type="text" id="clientCompany" placeholder="Acme Pty Ltd">
+    </div>
+    <div class="field-group">
+      <label for="clientContact">Contact Name</label>
+      <input type="text" id="clientContact" placeholder="Jane Smith">
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label for="clientTitle">Contact Title</label>
+      <input type="text" id="clientTitle" placeholder="Managing Director">
+    </div>
+    <div class="field-group">
+      <label for="proposalDate">Proposal Date</label>
+      <input type="date" id="proposalDate">
+    </div>
+  </div>
+  <div class="field-group">
+    <label for="validDays">Proposal Valid For (days)</label>
+    <input type="number" id="validDays" value="30" min="1" max="365" style="max-width:120px">
+  </div>
+
+  <div class="section-title">Staffing &amp; Options</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label for="staffBand">Staff Band</label>
+      <select id="staffBand">
+        <option value="0">Under 20 employees</option>
+        <option value="1">20 &ndash; 50 employees</option>
+        <option value="2">51 &ndash; 100 employees</option>
+        <option value="3">101 &ndash; 250 employees</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label for="recommended">Recommended Option</label>
+      <select id="recommended">
+        <option value="none">No recommendation highlighted</option>
+        <option value="fo">Framework Only</option>
+        <option value="hrf" selected>HR + Framework</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="checkbox-row">
+    <input type="checkbox" id="includeSupport">
+    <label for="includeSupport">Include Support Add-on in pricing</label>
+  </div>
+
+  <div class="section-title">Custom Notes (optional)</div>
+  <div class="field-group">
+    <label for="customNotes">Additional notes to appear above the signature block</label>
+    <textarea id="customNotes" rows="3" placeholder="e.g. Special terms, discounts, or additional context..."></textarea>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="generateProposal()">Generate Proposal</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════ PROPOSAL OUTPUT ════════════════════════════════════ -->
+<div id="proposal-actions">
+  <button class="btn btn-outline" style="color:#fff;border-color:#fff" onclick="backToEditor()">&#8592; Edit</button>
+  <button class="btn btn-primary" onclick="downloadProposal()">Download HTML</button>
+  <button class="btn btn-secondary" onclick="window.print()">Print / Save PDF</button>
+</div>
+<div id="proposal"></div>
+
+<script>
+// ── Pricing data ──
+const BANDS = [
+  { label: 'Under 20 employees', setup: 10000, fo: 1890, hrf: 4890, support: 1500, y1fo: 32680, y1hrf: 68680 },
+  { label: '20 \u2013 50 employees',   setup: 15000, fo: 3067, hrf: 7567, support: 2000, y1fo: 51800, y1hrf: 105800 },
+  { label: '51 \u2013 100 employees',  setup: 20000, fo: 3733, hrf: 10233, support: 3000, y1fo: 64800, y1hrf: 142800 },
+  { label: '101 \u2013 250 employees', setup: 28000, fo: 5367, hrf: 14867, support: 4500, y1fo: 92400, y1hrf: 206400 }
+];
+
+// ── Inclusions data ──
+const INCLUSIONS = [
+  { item: 'HR Policy & Procedure Framework',                fo: true,  hrf: true },
+  { item: 'Employee Handbook (customised)',                  fo: true,  hrf: true },
+  { item: 'Position Description Templates',                 fo: true,  hrf: true },
+  { item: 'Compliance & Legislative Updates',                fo: true,  hrf: true },
+  { item: 'Workplace Health & Safety Toolkit',               fo: true,  hrf: true },
+  { item: 'HR Document Templates & Letters',                 fo: true,  hrf: true },
+  { item: 'Online Learning Management System',               fo: true,  hrf: true },
+  { item: 'Dedicated HR Business Partner',                   fo: false, hrf: true },
+  { item: 'Unlimited HR Advice (phone & email)',             fo: false, hrf: true },
+  { item: 'Performance Management Support',                  fo: false, hrf: true },
+  { item: 'Recruitment & Onboarding Assistance',             fo: false, hrf: true },
+  { item: 'Disciplinary & Termination Guidance',             fo: false, hrf: true },
+  { item: 'Award & Agreement Interpretation',                fo: false, hrf: true },
+  { item: 'Workplace Investigations Support',                fo: false, hrf: true }
+];
+
+const TERMS = [
+  'Minimum engagement period of 12 months from commencement date.',
+  'Setup fee is invoiced upon acceptance; monthly fees commence on the agreed start date.',
+  'Monthly fees are invoiced at the beginning of each calendar month.',
+  'Payment terms: 14 days from date of invoice.',
+  'After the initial 12-month period, the engagement continues on a rolling monthly basis with 30 days\u2019 written notice to terminate.',
+  'Pricing is based on the staff band at the time of proposal. If headcount moves into a higher band, pricing will be adjusted with 30 days\u2019 notice.',
+  'All prices are exclusive of GST.'
+];
+
+function fmt(n) {
+  return '$' + n.toLocaleString('en-AU');
+}
+
+function generateProposal() {
+  const company  = document.getElementById('clientCompany').value.trim() || 'Client';
+  const contact  = document.getElementById('clientContact').value.trim() || '';
+  const title    = document.getElementById('clientTitle').value.trim() || '';
+  const dateVal  = document.getElementById('proposalDate').value;
+  const validDays = parseInt(document.getElementById('validDays').value) || 30;
+  const bandIdx  = parseInt(document.getElementById('staffBand').value);
+  const rec      = document.getElementById('recommended').value;
+  const addSupport = document.getElementById('includeSupport').checked;
+  const notes    = document.getElementById('customNotes').value.trim();
+
+  const band = BANDS[bandIdx];
+
+  const proposalDate = dateVal ? new Date(dateVal) : new Date();
+  const expiryDate = new Date(proposalDate);
+  expiryDate.setDate(expiryDate.getDate() + validDays);
+  const fmtDate = d => d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const foRec  = rec === 'fo';
+  const hrfRec = rec === 'hrf';
+  const foLabel  = 'Framework Only' + (foRec ? '<span class="recommended-badge">Recommended</span>' : '');
+  const hrfLabel = 'HR + Framework' + (hrfRec ? '<span class="recommended-badge">Recommended</span>' : '');
+  const foHighlight  = foRec ? ' highlight-col' : '';
+  const hrfHighlight = hrfRec ? ' highlight-col' : '';
+
+  // Calculate totals with support
+  let foMonthly  = band.fo;
+  let hrfMonthly = band.hrf;
+  let foY1  = band.y1fo;
+  let hrfY1 = band.y1hrf;
+  if (addSupport) {
+    foMonthly  += band.support;
+    hrfMonthly += band.support;
+    foY1  += band.support * 12;
+    hrfY1 += band.support * 12;
+  }
+  const foMonth13  = foMonthly;
+  const hrfMonth13 = hrfMonthly;
+
+  // Support add-on row
+  const supportRow = addSupport ? `
+    <tr class="addon-row">
+      <td>Support Add-on (monthly)</td>
+      <td class="${foHighlight}">${fmt(band.support)}/mo</td>
+      <td class="${hrfHighlight}">${fmt(band.support)}/mo</td>
+    </tr>` : '';
+
+  // Build proposal HTML
+  const html = `
+    <div class="prop-header">
+      <div class="brand">PeopleEconomics<span>&reg;</span></div>
+      <div class="tagline">Strategic HR Solutions for Growing Businesses</div>
+      <div class="title-block">
+        <h2>Service Proposal</h2>
+        <div class="meta">
+          Prepared for: <strong>${esc(company)}</strong>${contact ? ' &mdash; ' + esc(contact) + (title ? ', ' + esc(title) : '') : ''}<br>
+          Date: ${fmtDate(proposalDate)}<br>
+          Staff band: ${band.label}<br>
+          Valid until: ${fmtDate(expiryDate)}
+        </div>
+      </div>
+    </div>
+
+    <div class="prop-body">
+
+      <!-- Investment Comparison -->
+      <div class="section">
+        <h3>Investment Comparison</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40%"></th>
+              <th style="width:30%">${foLabel}</th>
+              <th style="width:30%">${hrfLabel}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>One-off Setup &amp; Implementation</td>
+              <td class="${foHighlight}">${fmt(band.setup)}</td>
+              <td class="${hrfHighlight}">${fmt(band.setup)}</td>
+            </tr>
+            <tr>
+              <td>Monthly Investment</td>
+              <td class="${foHighlight}">${fmt(band.fo)}/mo</td>
+              <td class="${hrfHighlight}">${fmt(band.hrf)}/mo</td>
+            </tr>
+            ${supportRow}
+            <tr class="total-row">
+              <td>Year 1 Total</td>
+              <td class="${foHighlight}">${fmt(foY1)}</td>
+              <td class="${hrfHighlight}">${fmt(hrfY1)}</td>
+            </tr>
+            <tr>
+              <td>Month 13 onwards</td>
+              <td class="${foHighlight}">${fmt(foMonth13)}/mo</td>
+              <td class="${hrfHighlight}">${fmt(hrfMonth13)}/mo</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- What's Included -->
+      <div class="section">
+        <h3>What&rsquo;s Included</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:52%">Inclusion</th>
+              <th style="width:24%">Framework Only</th>
+              <th style="width:24%">HR + Framework</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${INCLUSIONS.map(inc => `
+            <tr>
+              <td>${inc.item}</td>
+              <td class="${foHighlight}" style="text-align:center">${inc.fo ? '<span class="check">\u2713</span>' : '<span class="dash">&mdash;</span>'}</td>
+              <td class="${hrfHighlight}" style="text-align:center">${inc.hrf ? '<span class="check">\u2713</span>' : '<span class="dash">&mdash;</span>'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="page-break"></div>
+
+      <!-- Engagement Terms -->
+      <div class="section">
+        <h3>Engagement Terms</h3>
+        <ul class="terms-list">
+          ${TERMS.map(t => `<li>${t}</li>`).join('')}
+        </ul>
+      </div>
+
+      ${notes ? `
+      <div class="section">
+        <h3>Additional Notes</h3>
+        <p style="font-size:14px;line-height:1.7">${esc(notes).replace(/\n/g, '<br>')}</p>
+      </div>` : ''}
+
+      <!-- Acceptance & Signature -->
+      <div class="section">
+        <h3>Acceptance &amp; Authorisation</h3>
+        <p style="font-size:14px;margin-bottom:8px">
+          I, the undersigned, accept the terms outlined in this proposal and authorise
+          PeopleEconomics&reg; to proceed with the selected option.
+        </p>
+        <table style="margin-bottom:24px">
+          <thead>
+            <tr>
+              <th style="width:50%">Selected Option</th>
+              <th style="width:50%">Monthly Investment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:14px 16px"><span style="font-size:20px;margin-right:8px;vertical-align:middle;color:#999">&#9744;</span> Framework Only</td>
+              <td style="padding:14px 16px">${fmt(foMonthly)}/mo + ${fmt(band.setup)} setup</td>
+            </tr>
+            <tr>
+              <td style="padding:14px 16px"><span style="font-size:20px;margin-right:8px;vertical-align:middle;color:#999">&#9744;</span> HR + Framework</td>
+              <td style="padding:14px 16px">${fmt(hrfMonthly)}/mo + ${fmt(band.setup)} setup</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="sig-grid">
+          <div class="sig-box">
+            <h4>Client</h4>
+            <div class="sig-line"></div>
+            <div class="sig-label">Signature</div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Full Name</div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Position</div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Date</div>
+          </div>
+          <div class="sig-box">
+            <h4>PeopleEconomics&reg;</h4>
+            <div class="sig-line"></div>
+            <div class="sig-label">Signature</div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Full Name</div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Position</div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Date</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  `;
+
+  document.getElementById('proposal').innerHTML = html;
+  document.getElementById('editor').style.display = 'none';
+  document.getElementById('proposal').style.display = 'block';
+  document.getElementById('proposal-actions').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function backToEditor() {
+  document.getElementById('editor').style.display = 'block';
+  document.getElementById('proposal').style.display = 'none';
+  document.getElementById('proposal-actions').style.display = 'none';
+  window.scrollTo(0, 0);
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function downloadProposal() {
+  const proposalEl = document.getElementById('proposal');
+  // Grab all styles
+  const styles = document.querySelector('style').outerHTML;
+  const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PeopleEconomics Proposal</title>
+${styles}
+<style>
+  body { background: white; }
+  #proposal { display: block !important; max-width: 900px; margin: 0 auto; }
+</style>
+</head>
+<body>
+<div id="proposal">
+${proposalEl.innerHTML}
+</div>
+</body>
+</html>`;
+
+  const blob = new Blob([fullHtml], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const company = document.getElementById('clientCompany').value.trim() || 'Client';
+  const dateStr = (document.getElementById('proposalDate').value || new Date().toISOString().slice(0,10)).replace(/-/g, '');
+  a.download = `PeopleEconomics_Proposal_${company.replace(/\s+/g, '_')}_${dateStr}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Set default date to today
+document.getElementById('proposalDate').valueAsDate = new Date();
+</script>
+
+</body>
+</html>
